@@ -166,12 +166,11 @@ pay:
 
 ### Integrations
 
-```yml
-update-checker:
-  enabled: true
-  version-url: ""              # optional; empty uses built-in default URL
-  notify-permission: snoozeloot.admin
+On startup SnoozeLoot checks
+[version.txt](https://github.com/rmue11er/snoozeloot/blob/main/version.txt) on GitHub for updates
+and notifies online admins (`snoozeloot.admin`). This is built-in and not configurable.
 
+```yml
 bstats:
   enabled: true                # disable SnoozeLoot metrics only
 ```

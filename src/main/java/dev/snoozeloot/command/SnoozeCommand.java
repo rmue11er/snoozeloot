@@ -1,5 +1,6 @@
 package dev.snoozeloot.command;
 
+import dev.snoozeloot.SnoozeLootPlugin;
 import dev.snoozeloot.afk.AfkEngine;
 import dev.snoozeloot.afk.AfkSettingsFormatter;
 import dev.snoozeloot.config.ConfigService;
@@ -34,21 +35,16 @@ public final class SnoozeCommand implements CommandExecutor, TabCompleter {
   private final ShopGui shop;
   private final AfkEngine afk;
   private final TransactionLog transactionLog;
-  private final PayService payService;
 
-  public SnoozeCommand(
-      ConfigService config,
-      PointsService points,
-      ShopGui shop,
-      AfkEngine afk,
-      TransactionLog transactionLog,
-      PayService payService) {
-    this.config = config;
-    this.points = points;
-    this.shop = shop;
-    this.afk = afk;
-    this.transactionLog = transactionLog;
-    this.payService = payService;
+  private final SnoozeLootPlugin plugin;
+
+  public SnoozeCommand(SnoozeLootPlugin plugin) {
+    this.plugin = plugin;
+    this.config = plugin.configService();
+    this.points = plugin.pointsService();
+    this.shop = plugin.shopGui();
+    this.afk = plugin.afkEngine();
+    this.transactionLog = plugin.transactionLog();
   }
 
   @Override
@@ -229,7 +225,9 @@ public final class SnoozeCommand implements CommandExecutor, TabCompleter {
     }
 
     PayService.PayResult result =
-        payService.pay(
+        plugin
+            .payService()
+            .pay(
             payer.getUniqueId(),
             target.getUniqueId(),
             amount,
@@ -515,10 +513,7 @@ public final class SnoozeCommand implements CommandExecutor, TabCompleter {
       return true;
     }
 
-    config.reload();
-    config.messages().reload();
-    shop.reload();
-    afk.reload();
+    plugin.reloadRuntime();
     config.messages().send(sender, "admin-reload", Map.of());
     return true;
   }

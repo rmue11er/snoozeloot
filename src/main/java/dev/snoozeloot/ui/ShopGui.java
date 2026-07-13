@@ -145,16 +145,34 @@ public final class ShopGui implements Listener {
     completePurchase(p, item);
   }
 
+  private boolean canPurchase(Player player, ConfigService.ShopItem item) {
+    if (item.price() < 0) {
+      return false;
+    }
+    if (item.hasPurchaseLimit()) {
+      int bought = metaStore.getPurchaseCount(player.getUniqueId(), item.id());
+      if (bought >= item.purchaseLimit()) {
+        return false;
+      }
+    }
+    return points.get(player.getUniqueId()) >= item.price();
+  }
+
   private boolean needsConfirmation(ConfigService.ShopItem item) {
     int threshold = config.shop().confirmAbovePrice();
     return threshold >= 0 && item.price() >= threshold;
   }
 
   private void completePurchase(Player p, ConfigService.ShopItem item) {
+    if (!canPurchase(p, item)) {
+      config.messages().send(p, "shop-not-enough-points", Map.of());
+      p.playSound(p.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.7f, 1.0f);
+      return;
+    }
+
     points.remove(p.getUniqueId(), item.price());
     if (item.hasPurchaseLimit()) {
       metaStore.incrementPurchase(p.getUniqueId(), item.id());
-      metaStore.flushNow();
     }
 
     p.closeInventory();

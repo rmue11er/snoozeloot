@@ -37,6 +37,7 @@ public final class BonusService {
             meta.withLastDailyBonusDate(today)
                 .withLastStreakDate(today)
                 .withStreakDays(streakDays));
+    metaStore.flushNow();
 
     return BonusResult.claimed("daily", amount, streakDays, multiplier);
   }
@@ -58,6 +59,7 @@ public final class BonusService {
     int amount = (int) Math.max(0, Math.floor(config.weekly().points() * multiplier));
 
     metaStore.update(playerId, meta -> meta.withLastWeeklyBonusWeek(week));
+    metaStore.flushNow();
 
     return BonusResult.claimed("weekly", amount, streakDays, multiplier);
   }
