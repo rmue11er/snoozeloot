@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g. 1.1) — must match pom.xml"
+        required: true
+        default: "1.1"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: temurin
+          cache: maven
+
+      - name: Build and test
+        run: mvn -B verify
+
+      - name: Resolve release version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          POM_VERSION="$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)"
+          if [ "$VERSION" != "$POM_VERSION" ]; then
+            echo "Tag/input version ($VERSION) does not match pom.xml ($POM_VERSION)" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Locate plugin jar
+        id: jar
+        run: |
+          JAR=""
+          for candidate in target/snoozeloot-*.jar; do
+            base="$(basename "$candidate")"
+            if [[ "$base" == original-* ]]; then
+              continue
+            fi
+            JAR="$candidate"
+            break
+          done
+          if [ -z "$JAR" ]; then
+            echo "No shaded plugin jar found in target/" >&2
+            exit 1
+          fi
+          echo "path=$JAR" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "$JAR")" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: SnoozeLoot ${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          files: ${{ steps.jar.outputs.path }}

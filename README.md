@@ -13,6 +13,20 @@ with **JDK 21, 22, and 23** — so builds are validated off macOS and on common 
 SnoozeLoot targets **Paper 1.20.5+**, which requires **Java 21 minimum**. Older Minecraft
 versions (Java 8/17) are out of scope for this plugin.
 
+## Release
+
+Pushing a version tag on `main` builds the plugin and creates a [GitHub Release](https://github.com/rmue11er/snoozeloot/releases) with the shaded jar attached.
+
+```bash
+# version in pom.xml must match the tag (without the v prefix)
+git tag v1.1
+git push origin v1.1
+```
+
+Manual release (GitHub → Actions → Release → Run workflow) is also available.
+
+Every push/PR to `main` still runs tests only (CI). Releases are tag-based so version numbers stay intentional.
+
 ## Prerequisites
 
 - **JDK 21+** (required for Paper 1.20.5+; matches production servers)
