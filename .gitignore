@@ -1,0 +1,49 @@
+# ---- OS ----
+.DS_Store
+
+# ---- IDEs ----
+.idea/
+*.iml
+.vscode/
+
+# ---- Java/Maven ----
+target/
+*.class
+*.log
+.classpath
+.project
+.settings/
+
+# Local Maven repo used by this project (see README/dev scripts)
+.m2/
+
+# ---- Paper local dev server ----
+run/cache/
+run/crash-reports/
+run/logs/
+run/libraries/
+run/plugins/*.jar
+run/*.jar
+run/eula.txt
+run/server.properties
+run/banned-ips.json
+run/banned-players.json
+run/ops.json
+run/usercache.json
+run/whitelist.json
+run/permissions.yml
+run/help.yml
+run/spigot.yml
+run/bukkit.yml
+run/paper.yml
+run/paper-global.yml
+run/paper-world-defaults.yml
+run/commands.yml
+run/version_history.json
+run/timings/
+
+# Worlds (generated)
+run/world/
+run/world_nether/
+run/world_the_end/
+

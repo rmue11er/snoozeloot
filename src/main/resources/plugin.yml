@@ -1,0 +1,30 @@
+name: SnoozeLoot
+version: ${project.version}
+main: dev.snoozeloot.SnoozeLootPlugin
+api-version: "1.20"
+author: rene
+description: AFK rewards + points-based shop for Paper servers. Uses bStats (https://bStats.org) for anonymous usage metrics.
+
+softdepend:
+  - PlaceholderAPI
+  - WorldGuard
+
+commands:
+  snooze:
+    description: SnoozeLoot main command
+    usage: /snooze [shop|show|stats|pay|history|help|debug|set|reset|admin|give|remove|reload]
+    permission: snoozeloot.use
+
+permissions:
+  snoozeloot.use:
+    description: Use SnoozeLoot commands
+    default: true
+  snoozeloot.pay:
+    description: Pay SnoozePoints to other players
+    default: true
+  snoozeloot.history.admin:
+    description: View all recent shop purchases
+    default: op
+  snoozeloot.admin:
+    description: Admin commands (give/remove/set/reset/reload/debug)
+    default: op

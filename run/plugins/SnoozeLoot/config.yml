@@ -1,0 +1,54 @@
+afk:
+  idle-check-interval-seconds: 10
+  afk-time-threshold-seconds: 10
+  payout-interval-seconds: 5
+  points-per-interval: 1
+  actionbar-interval-ticks: 40
+  particles:
+    enabled: true
+    interval-ticks: 40
+
+anti-exploit:
+  # If a player is moved by the environment (water/vehicle/rails) without any real inputs,
+  # movement will not count as activity.
+  untrusted-movement-input-grace-seconds: 4
+  ignore-movement-when-in-water: true
+  ignore-movement-when-in-vehicle: true
+  ignore-movement-when-on-rails: true
+
+multipliers:
+  snoozeloot:
+    multiplier:
+      vip: 1.5
+      mvp: 2.0
+
+messages:
+  use-external-file: true
+
+shop:
+  size: 27
+  items:
+    vip:
+      slot: 11
+      material: DIAMOND
+      name: <aqua>VIP</aqua>
+      lore:
+      - <gray>Buy the VIP rank.</gray>
+      - '<gray>Cost: <gold><price></gold> points</gray>'
+      price: 100
+      commands:
+      - lp user %player% parent add vip
+    diamonds:
+      slot: 15
+      material: DIAMOND_BLOCK
+      name: <blue>Diamonds</blue>
+      lore:
+      - <gray>A small diamond reward for snoozing.</gray>
+      - '<gray>Cost: <gold><price></gold> points</gray>'
+      price: 25
+      commands:
+      - give %player% diamond 8
+  confirm-above-price: 50
+  transaction-log-max-entries: 500
+config-version: 3
+

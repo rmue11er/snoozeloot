@@ -1,0 +1,111 @@
+config-version: 3
+
+storage:
+  type: yaml # yaml|sqlite
+
+language: en # loads messages_<language>.yml from the jar when present
+
+afk:
+  idle-check-interval-seconds: 10
+  afk-time-threshold-seconds: 300
+  payout-interval-seconds: 60
+  points-per-interval: 1
+  actionbar-interval-ticks: 40
+  allowed-worlds: [] # empty = all worlds
+  allowed-regions: [] # empty = all regions (WorldGuard region ids)
+  blocked-gamemodes:
+    - CREATIVE
+    - SPECTATOR
+  min-active-seconds-before-afk: 60
+  max-afk-seconds-per-day: -1 # -1 = unlimited
+  max-afk-seconds-per-session: -1 # -1 = unlimited
+  pool-detection:
+    enabled: true
+    samples: 12
+  particles:
+    enabled: true
+    interval-ticks: 40
+  start-notification:
+    title-enabled: true
+    title: "<gold>Snoozing...</gold>"
+    subtitle: "<gray>Earning SnoozePoints</gray>"
+    sound-enabled: true
+    sound: BLOCK_NOTE_BLOCK_CHIME
+    volume: 0.7
+    pitch: 1.0
+  end-notification:
+    sound-enabled: true
+    sound: ENTITY_EXPERIENCE_ORB_PICKUP
+    volume: 0.6
+    pitch: 1.2
+
+anti-exploit:
+  untrusted-movement-input-grace-seconds: 4
+  ignore-movement-when-in-water: true
+  ignore-movement-when-in-vehicle: true
+  ignore-movement-when-on-rails: true
+
+multipliers:
+  snoozeloot.multiplier.vip: 1.5
+  snoozeloot.multiplier.mvp: 2.0
+
+bonuses:
+  daily:
+    enabled: true
+    points: 25
+  weekly:
+    enabled: true
+    points: 100
+  streak:
+    enabled: true
+    min-minutes-per-day: 30
+    multiplier-per-day: 0.05
+    max-multiplier: 1.5
+
+pay:
+  enabled: true
+  min-amount: 1
+  cooldown-seconds: 30
+
+stats:
+  top-size: 10
+
+update-checker:
+  enabled: true
+  version-url: ""
+  notify-permission: snoozeloot.admin
+
+bstats:
+  enabled: true # SnoozeLoot-specific toggle; server-wide opt-out also via plugins/bStats/config.yml
+
+# Inline fallback messages; primary strings live in messages_en.yml
+messages:
+  use-external-file: true
+
+shop:
+  size: 27
+  confirm-above-price: 50
+  transaction-log-max-entries: 500
+  items:
+    vip:
+      slot: 11
+      material: DIAMOND
+      name: "<aqua>VIP</aqua>"
+      lore:
+        - "<gray>Buy the VIP rank.</gray>"
+        - "<gray>Cost: <gold><price></gold> points</gray>"
+      price: 100
+      purchase-limit: -1
+      commands:
+        - "lp user %player% parent add vip"
+    diamonds:
+      slot: 15
+      material: DIAMOND_BLOCK
+      name: "<blue>Diamonds</blue>"
+      lore:
+        - "<gray>A small diamond reward for snoozing.</gray>"
+        - "<gray>Cost: <gold><price></gold> points</gray>"
+      price: 25
+      purchase-limit: 3
+      commands:
+        - "give %player% diamond 8"
