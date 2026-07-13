@@ -1,7 +1,6 @@
 package dev.snoozeloot.points;
 
 import dev.snoozeloot.points.repo.PointsRepository;
-import dev.snoozeloot.points.repo.YamlPointsRepository;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -11,10 +10,18 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class PointsService {
   private final PointsRepository repository;
   private final Map<UUID, PlayerBalance> balances = new ConcurrentHashMap<>();
+  private final Object transferLock = new Object();
 
   public PointsService(PointsRepository repository) {
     this.repository = repository;
+    if (!repository.isWritable()) {
+      throw new IllegalStateException("Points storage is not writable after load failure.");
+    }
     balances.putAll(repository.loadAll());
+  }
+
+  public boolean isWritable() {
+    return repository.isWritable();
   }
 
   public int get(UUID playerId) {
@@ -72,7 +79,7 @@ public final class PointsService {
               if (name != null) {
                 base = base.withName(name);
               }
-              return base.withPoints(base.points() + delta);
+              return base.withPoints(safeAdd(base.points(), delta));
             });
     persist();
     return next.points();
@@ -91,6 +98,46 @@ public final class PointsService {
             });
     persist();
     return next.points();
+  }
+
+  public Optional<TransferResult> transfer(
+      UUID senderId, UUID receiverId, int amount, String senderName, String receiverName) {
+    if (senderId == null || receiverId == null || amount <= 0 || senderId.equals(receiverId)) {
+      return Optional.empty();
+    }
+
+    synchronized (transferLock) {
+      PlayerBalance sender = balances.get(senderId);
+      int senderPoints = sender == null ? 0 : sender.points();
+      if (senderPoints < amount) {
+        return Optional.empty();
+      }
+
+      balances.compute(
+          senderId,
+          (id, existing) -> {
+            PlayerBalance base = existing == null ? new PlayerBalance(0, senderName) : existing;
+            if (senderName != null && !senderName.isBlank()) {
+              base = base.withName(senderName);
+            }
+            return base.withPoints(base.points() - amount);
+          });
+
+      balances.compute(
+          receiverId,
+          (id, existing) -> {
+            PlayerBalance base = existing == null ? new PlayerBalance(0, receiverName) : existing;
+            if (receiverName != null && !receiverName.isBlank()) {
+              base = base.withName(receiverName);
+            }
+            return base.withPoints(safeAdd(base.points(), amount));
+          });
+
+      persist();
+      return Optional.of(
+          new TransferResult(
+              amount, get(senderId), get(receiverId)));
+    }
   }
 
   public Optional<UUID> findUuidByName(String name) {
@@ -112,19 +159,20 @@ public final class PointsService {
   }
 
   public void flushNow() {
-    if (repository instanceof YamlPointsRepository yaml) {
-      yaml.saveNow(snapshot());
-    } else {
-      repository.saveAll(snapshot());
-    }
+    repository.saveNow(snapshot());
   }
 
   private void persist() {
-    Map<UUID, PlayerBalance> copy = snapshot();
-    if (repository instanceof YamlPointsRepository yaml) {
-      yaml.queueSave(copy);
-    } else {
-      repository.saveAll(copy);
-    }
+    repository.queueSave(snapshot());
   }
+
+  private static int safeAdd(int current, int delta) {
+    long sum = (long) current + delta;
+    if (sum > Integer.MAX_VALUE) {
+      return Integer.MAX_VALUE;
+    }
+    return (int) sum;
+  }
+
+  public record TransferResult(int amount, int senderBalance, int receiverBalance) {}
 }

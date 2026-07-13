@@ -41,14 +41,16 @@ public final class PayService {
       return PayResult.failure("insufficient-funds");
     }
 
-    pointsService.remove(senderId, amount);
-    pointsService.add(receiverId, amount, receiverName);
-    if (senderName != null && !senderName.isBlank()) {
-      pointsService.rememberName(senderId, senderName);
+    var transfer =
+        pointsService.transfer(senderId, receiverId, amount, senderName, receiverName);
+    if (transfer.isEmpty()) {
+      return PayResult.failure("insufficient-funds");
     }
+
     lastPayAtMillis.put(senderId, now);
 
-    return PayResult.success(amount, pointsService.get(senderId), pointsService.get(receiverId));
+    PointsService.TransferResult moved = transfer.get();
+    return PayResult.success(moved.amount(), moved.senderBalance(), moved.receiverBalance());
   }
 
   public record PayConfig(int minAmount, long cooldownSeconds) {

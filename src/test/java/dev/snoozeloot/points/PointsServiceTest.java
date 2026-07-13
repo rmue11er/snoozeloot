@@ -70,4 +70,19 @@ class PointsServiceTest {
     assertEquals(26, service.get(PLAYER));
     assertEquals("Steve", top.getFirst().name());
   }
+
+  @Test
+  void transferMovesPointsAtomically() {
+    UUID sender = UUID.randomUUID();
+    UUID receiver = UUID.randomUUID();
+    service.set(sender, 100, "Sender");
+
+    var result = service.transfer(sender, receiver, 30, "Sender", "Receiver");
+
+    assertTrue(result.isPresent());
+    assertEquals(70, service.get(sender));
+    assertEquals(30, service.get(receiver));
+    assertEquals(70, result.get().senderBalance());
+    assertEquals(30, result.get().receiverBalance());
+  }
 }

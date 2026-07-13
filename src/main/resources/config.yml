@@ -70,11 +70,6 @@ pay:
 stats:
   top-size: 10
 
-update-checker:
-  enabled: true
-  version-url: ""
-  notify-permission: snoozeloot.admin
-
 bstats:
   enabled: true # SnoozeLoot-specific toggle; server-wide opt-out also via plugins/bStats/config.yml
 

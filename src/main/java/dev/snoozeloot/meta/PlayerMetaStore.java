@@ -12,7 +12,15 @@ public final class PlayerMetaStore {
 
   public PlayerMetaStore(MetaRepository repository) {
     this.repository = repository;
-    meta.putAll(repository.loadAll());
+    Map<UUID, PlayerMeta> loaded = repository.loadAll();
+    if (!repository.isWritable()) {
+      throw new IllegalStateException("Player meta storage is not writable after load failure.");
+    }
+    meta.putAll(loaded);
+  }
+
+  public boolean isWritable() {
+    return repository.isWritable();
   }
 
   public PlayerMeta get(UUID playerId) {
@@ -20,9 +28,12 @@ public final class PlayerMetaStore {
   }
 
   public PlayerMeta update(UUID playerId, Function<PlayerMeta, PlayerMeta> updater) {
-    return meta.compute(
-        playerId,
-        (id, existing) -> updater.apply(existing == null ? PlayerMeta.empty() : existing));
+    PlayerMeta updated =
+        meta.compute(
+            playerId,
+            (id, existing) -> updater.apply(existing == null ? PlayerMeta.empty() : existing));
+    queueFlush();
+    return updated;
   }
 
   public int getPurchaseCount(UUID playerId, String itemId) {
@@ -45,7 +56,11 @@ public final class PlayerMetaStore {
     return new HashMap<>(meta);
   }
 
+  public void queueFlush() {
+    repository.queueSave(snapshot());
+  }
+
   public void flushNow() {
-    repository.saveAll(snapshot());
+    repository.saveNow(snapshot());
   }
 }

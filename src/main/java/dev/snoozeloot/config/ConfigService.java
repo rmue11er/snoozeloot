@@ -120,7 +120,7 @@ public final class ConfigService {
 
         String name = s.getString("name", key);
         var lore = s.getStringList("lore");
-        int price = s.getInt("price", 0);
+        int price = Math.max(0, s.getInt("price", 0));
         int purchaseLimit = s.getInt("purchase-limit", -1);
         var commands = s.getStringList("commands");
 
@@ -147,14 +147,6 @@ public final class ConfigService {
 
   public StatsConfig stats() {
     return new StatsConfig(plugin.getConfig().getInt("stats.top-size", 10));
-  }
-
-  public UpdateCheckerConfig updateChecker() {
-    var c = plugin.getConfig();
-    return new UpdateCheckerConfig(
-        c.getBoolean("update-checker.enabled", true),
-        c.getString("update-checker.version-url", ""),
-        c.getString("update-checker.notify-permission", "snoozeloot.admin"));
   }
 
   public BStatsConfig bstats() {
@@ -249,9 +241,6 @@ public final class ConfigService {
   public record MultiplierConfig(Map<String, Double> permissionToMultiplier) {}
 
   public record StatsConfig(int topSize) {}
-
-  public record UpdateCheckerConfig(
-      boolean enabled, String versionUrl, String notifyPermission) {}
 
   public record BStatsConfig(boolean enabled) {}
 }

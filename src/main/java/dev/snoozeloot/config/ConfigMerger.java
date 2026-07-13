@@ -66,7 +66,6 @@ public final class ConfigMerger {
       migrateSection(current, defaults, "afk");
       migrateSection(current, defaults, "bonuses");
       migrateSection(current, defaults, "pay");
-      migrateSection(current, defaults, "update-checker");
       migrateSection(current, defaults, "bstats");
       migrateScalar(current, defaults, "language");
       if (defaults.isConfigurationSection("shop")) {

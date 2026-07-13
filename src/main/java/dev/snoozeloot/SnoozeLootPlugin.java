@@ -37,28 +37,29 @@ public final class SnoozeLootPlugin extends JavaPlugin {
     saveDefaultConfig();
     ConfigMerger.mergeMissingDefaults(this);
 
-    this.configService = new ConfigService(this);
-    StorageFactory.Bundle storage = StorageFactory.create(this, configService);
-    this.pointsService = new PointsService(storage.pointsRepository());
-    this.metaStore = storage.metaStore();
-    this.transactionLog = storage.transactionLog();
+    try {
+      this.configService = new ConfigService(this);
+      StorageFactory.Bundle storage = StorageFactory.create(this, configService);
+      this.pointsService = new PointsService(storage.pointsRepository());
+      this.metaStore = new PlayerMetaStore(storage.metaRepository());
+      this.transactionLog = storage.transactionLog();
+    } catch (IllegalStateException e) {
+      getLogger().severe("Failed to initialize SnoozeLoot storage: " + e.getMessage());
+      Bukkit.getPluginManager().disablePlugin(this);
+      return;
+    }
+
     this.bonusService = new BonusService(metaStore, configService.bonuses());
-    this.payService =
-        new PayService(
-            pointsService,
-            new PayService.PayConfig(
-                configService.pay().minAmount(), configService.pay().cooldownSeconds()));
+    this.payService = createPayService();
     this.worldGuardHook = new WorldGuardHook(getLogger());
     this.shopGui =
         new ShopGui(this, configService, pointsService, metaStore, transactionLog);
     this.afkEngine =
         new AfkEngine(
             this, configService, pointsService, metaStore, bonusService, worldGuardHook);
-    this.updateChecker = new UpdateChecker(this, configService);
+    this.updateChecker = new UpdateChecker(this);
 
-    var snoozeCommand =
-        new SnoozeCommand(
-            configService, pointsService, shopGui, afkEngine, transactionLog, payService);
+    var snoozeCommand = new SnoozeCommand(this);
     Objects.requireNonNull(getCommand("snooze"), "Command 'snooze' not defined in plugin.yml")
         .setExecutor(snoozeCommand);
     Objects.requireNonNull(getCommand("snooze"), "Command 'snooze' not defined in plugin.yml")
@@ -98,6 +99,20 @@ public final class SnoozeLootPlugin extends JavaPlugin {
     getLogger().info("SnoozeLoot disabled.");
   }
 
+  public void reloadRuntime() {
+    pointsService.flushNow();
+    metaStore.flushNow();
+
+    ConfigMerger.mergeMissingDefaults(this);
+    configService.reload();
+    configService.messages().reload();
+
+    bonusService = new BonusService(metaStore, configService.bonuses());
+    payService = createPayService();
+    afkEngine.reload(bonusService);
+    shopGui.reload();
+  }
+
   public ConfigService configService() {
     return configService;
   }
@@ -110,8 +125,31 @@ public final class SnoozeLootPlugin extends JavaPlugin {
     return metaStore;
   }
 
+  public PayService payService() {
+    return payService;
+  }
+
+  public BonusService bonusService() {
+    return bonusService;
+  }
+
   public AfkEngine afkEngine() {
     return afkEngine;
+  }
+
+  public ShopGui shopGui() {
+    return shopGui;
+  }
+
+  public TransactionLog transactionLog() {
+    return transactionLog;
+  }
+
+  private PayService createPayService() {
+    return new PayService(
+        pointsService,
+        new PayService.PayConfig(
+            configService.pay().minAmount(), configService.pay().cooldownSeconds()));
   }
 
   private void setupPlaceholderApi() {

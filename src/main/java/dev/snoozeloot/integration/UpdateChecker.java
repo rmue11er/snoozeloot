@@ -1,6 +1,5 @@
 package dev.snoozeloot.integration;
 
-import dev.snoozeloot.config.ConfigService;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -12,37 +11,27 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class UpdateChecker {
-  private static final String DEFAULT_VERSION_URL =
-      "https://raw.githubusercontent.com/rene/snoozeloot/main/version.txt";
+  private static final String VERSION_URL =
+      "https://raw.githubusercontent.com/rmue11er/snoozeloot/main/version.txt";
+  private static final String NOTIFY_PERMISSION = "snoozeloot.admin";
 
   private final JavaPlugin plugin;
-  private final ConfigService config;
   private final Logger logger;
   private volatile String latestVersion;
 
-  public UpdateChecker(JavaPlugin plugin, ConfigService config) {
+  public UpdateChecker(JavaPlugin plugin) {
     this.plugin = plugin;
-    this.config = config;
     this.logger = plugin.getLogger();
   }
 
   public void checkAsync() {
-    if (!config.updateChecker().enabled()) {
-      return;
-    }
-
     String current = plugin.getDescription().getVersion();
-    String url = config.updateChecker().versionUrl();
-    if (url == null || url.isBlank()) {
-      url = DEFAULT_VERSION_URL;
-    }
 
-    String versionUrl = url;
     Bukkit.getScheduler()
         .runTaskAsynchronously(
             plugin,
             () -> {
-              String remote = fetchVersion(versionUrl);
+              String remote = fetchVersion(VERSION_URL);
               if (remote == null || remote.isBlank()) {
                 return;
               }
@@ -59,10 +48,7 @@ public final class UpdateChecker {
                         plugin,
                         () ->
                             Bukkit.getOnlinePlayers().stream()
-                                .filter(
-                                    player ->
-                                        player.hasPermission(
-                                            config.updateChecker().notifyPermission()))
+                                .filter(player -> player.hasPermission(NOTIFY_PERMISSION))
                                 .forEach(
                                     player ->
                                         player.sendMessage(

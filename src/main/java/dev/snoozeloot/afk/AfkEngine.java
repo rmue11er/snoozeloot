@@ -46,7 +46,7 @@ public final class AfkEngine implements Listener {
   private final ConfigService config;
   private final PointsService points;
   private final PlayerMetaStore metaStore;
-  private final BonusService bonusService;
+  private BonusService bonusService;
   private final WorldGuardHook worldGuard;
 
   private final Map<UUID, State> state = new HashMap<>();
@@ -98,6 +98,11 @@ public final class AfkEngine implements Listener {
     if (actionbarTask != null) actionbarTask.cancel();
     if (particleTask != null) particleTask.cancel();
     idleTask = payoutTask = actionbarTask = particleTask = null;
+  }
+
+  public void reload(BonusService bonusService) {
+    this.bonusService = bonusService;
+    start();
   }
 
   public void reload() {

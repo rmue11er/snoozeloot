@@ -1,5 +1,6 @@
 package dev.snoozeloot.meta;
 
+import dev.snoozeloot.storage.DebouncedSnapshotWriter;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -12,10 +13,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class YamlMetaRepository implements MetaRepository {
   private final JavaPlugin plugin;
   private final File file;
+  private final DebouncedSnapshotWriter<Map<UUID, PlayerMeta>> writer;
 
   public YamlMetaRepository(JavaPlugin plugin) {
     this.plugin = plugin;
     this.file = new File(plugin.getDataFolder(), "meta.yml");
+    this.writer = new DebouncedSnapshotWriter<>(plugin, this::saveAll, 40L);
   }
 
   @Override
@@ -46,6 +49,16 @@ public final class YamlMetaRepository implements MetaRepository {
       }
     }
     return map;
+  }
+
+  @Override
+  public void queueSave(Map<UUID, PlayerMeta> meta) {
+    writer.queue(new HashMap<>(meta));
+  }
+
+  @Override
+  public void saveNow(Map<UUID, PlayerMeta> meta) {
+    writer.flushNow(new HashMap<>(meta));
   }
 
   @Override
