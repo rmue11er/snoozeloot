@@ -31,7 +31,7 @@ mvn -q -Dmaven.repo.local=.m2 clean package
 
 Output jar (shaded, includes SQLite + bStats):
 
-- `target/snoozeloot-1.1.0.jar`
+- `target/snoozeloot-1.1.jar`
 
 Do not deploy `original-snoozeloot-*.jar` — that artifact excludes bundled dependencies.
 

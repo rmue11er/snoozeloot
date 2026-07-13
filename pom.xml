@@ -6,7 +6,7 @@
 
   <groupId>dev.snoozeloot</groupId>
   <artifactId>snoozeloot</artifactId>
-  <version>1.1.0</version>
+  <version>1.1</version>
   <name>SnoozeLoot</name>
   <description>AFK rewards + points-based shop for Paper servers</description>
 
