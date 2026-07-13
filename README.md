@@ -5,9 +5,17 @@ config-driven **points shop** GUI with purchase limits, confirmation, and transa
 
 Target: **Paper 1.20+** (tested on 1.20.6).
 
+## CI
+
+GitHub Actions runs `mvn verify` on every push and pull request to `main`, on **Ubuntu (Linux)**
+with **JDK 21, 22, and 23** — so builds are validated off macOS and on common server runtimes.
+
+SnoozeLoot targets **Paper 1.20.5+**, which requires **Java 21 minimum**. Older Minecraft
+versions (Java 8/17) are out of scope for this plugin.
+
 ## Prerequisites
 
-- **JDK 21** (for Minecraft/Paper 1.20.5+)
+- **JDK 21+** (required for Paper 1.20.5+; matches production servers)
 - **Maven** (`mvn`)
 
 ```bash

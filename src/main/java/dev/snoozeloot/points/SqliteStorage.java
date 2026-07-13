@@ -6,6 +6,7 @@ import dev.snoozeloot.points.repo.PointsRepository;
 import dev.snoozeloot.shop.TransactionLog;
 import dev.snoozeloot.shop.TransactionRecord;
 import dev.snoozeloot.storage.DebouncedSnapshotWriter;
+import dev.snoozeloot.storage.PluginEnvironment;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -47,7 +48,7 @@ public final class SqliteStorage implements PointsRepository, TransactionLog {
         active_play_seconds = excluded.active_play_seconds
       """;
 
-  private final JavaPlugin plugin;
+  private final PluginEnvironment environment;
   private final File dbFile;
   private final int maxTransactionEntries;
   private volatile boolean writable;
@@ -55,19 +56,25 @@ public final class SqliteStorage implements PointsRepository, TransactionLog {
   private final DebouncedSnapshotWriter<Map<UUID, PlayerMeta>> metaWriter;
 
   public SqliteStorage(JavaPlugin plugin) {
-    this(
-        plugin,
-        new File(plugin.getDataFolder(), "snoozeloot.db"),
-        plugin.getConfig().getInt("shop.transaction-log-max-entries", 500));
+    this(PluginEnvironment.from(plugin));
   }
 
-  public SqliteStorage(JavaPlugin plugin, File dbFile, int maxTransactionEntries) {
-    this.plugin = plugin;
+  public SqliteStorage(PluginEnvironment environment) {
+    this(
+        environment,
+        new File(environment.dataFolder(), "snoozeloot.db"),
+        environment.transactionLogMaxEntries());
+  }
+
+  public SqliteStorage(PluginEnvironment environment, File dbFile, int maxTransactionEntries) {
+    this.environment = environment;
     this.dbFile = dbFile;
     this.maxTransactionEntries = Math.max(1, maxTransactionEntries);
     this.writable = initSchema();
-    this.pointsWriter = new DebouncedSnapshotWriter<>(plugin, this::saveAllPoints, 40L);
-    this.metaWriter = new DebouncedSnapshotWriter<>(plugin, this::saveAllMeta, 40L);
+    this.pointsWriter =
+        new DebouncedSnapshotWriter<>(environment.plugin(), this::saveAllPoints, 40L);
+    this.metaWriter =
+        new DebouncedSnapshotWriter<>(environment.plugin(), this::saveAllMeta, 40L);
   }
 
   public MetaRepository asMetaRepository() {
@@ -121,8 +128,8 @@ public final class SqliteStorage implements PointsRepository, TransactionLog {
       }
     } catch (SQLException e) {
       writable = false;
-      plugin
-          .getLogger()
+      environment
+          .logger()
           .severe("Failed to load player balances from SQLite. Writes are disabled: " + e.getMessage());
     }
     return balances;
@@ -167,7 +174,7 @@ public final class SqliteStorage implements PointsRepository, TransactionLog {
         connection.setAutoCommit(true);
       }
     } catch (SQLException e) {
-      plugin.getLogger().warning("Failed to save player balances: " + e.getMessage());
+      environment.logger().warning("Failed to save player balances: " + e.getMessage());
     }
   }
 
@@ -206,8 +213,8 @@ public final class SqliteStorage implements PointsRepository, TransactionLog {
       }
     } catch (SQLException e) {
       writable = false;
-      plugin
-          .getLogger()
+      environment
+          .logger()
           .severe("Failed to load player meta from SQLite. Writes are disabled: " + e.getMessage());
     }
     return meta;
@@ -263,7 +270,7 @@ public final class SqliteStorage implements PointsRepository, TransactionLog {
         connection.setAutoCommit(true);
       }
     } catch (SQLException e) {
-      plugin.getLogger().warning("Failed to save player meta: " + e.getMessage());
+      environment.logger().warning("Failed to save player meta: " + e.getMessage());
     }
   }
 
@@ -288,7 +295,7 @@ public final class SqliteStorage implements PointsRepository, TransactionLog {
       insert.executeUpdate();
       trimTransactions(connection);
     } catch (SQLException e) {
-      plugin.getLogger().warning("Failed to append transaction: " + e.getMessage());
+      environment.logger().warning("Failed to append transaction: " + e.getMessage());
     }
   }
 
@@ -315,7 +322,7 @@ public final class SqliteStorage implements PointsRepository, TransactionLog {
         }
       }
     } catch (SQLException e) {
-      plugin.getLogger().warning("Failed to load recent transactions: " + e.getMessage());
+      environment.logger().warning("Failed to load recent transactions: " + e.getMessage());
     }
     return List.copyOf(records);
   }
@@ -345,14 +352,14 @@ public final class SqliteStorage implements PointsRepository, TransactionLog {
         }
       }
     } catch (SQLException e) {
-      plugin.getLogger().warning("Failed to load player transactions: " + e.getMessage());
+      environment.logger().warning("Failed to load player transactions: " + e.getMessage());
     }
     return List.copyOf(records);
   }
 
   private boolean initSchema() {
-    if (!plugin.getDataFolder().exists() && !plugin.getDataFolder().mkdirs()) {
-      plugin.getLogger().severe("Could not create plugin data folder.");
+    if (!environment.dataFolder().exists() && !environment.dataFolder().mkdirs()) {
+      environment.logger().severe("Could not create plugin data folder.");
       return false;
     }
 
@@ -401,7 +408,7 @@ public final class SqliteStorage implements PointsRepository, TransactionLog {
           """);
       return true;
     } catch (SQLException e) {
-      plugin.getLogger().severe("Failed to initialize snoozeloot.db: " + e.getMessage());
+      environment.logger().severe("Failed to initialize snoozeloot.db: " + e.getMessage());
       return false;
     }
   }
@@ -419,7 +426,7 @@ public final class SqliteStorage implements PointsRepository, TransactionLog {
             .put(rs.getString("item_id"), Math.max(0, rs.getInt("count")));
       }
     } catch (SQLException e) {
-      plugin.getLogger().warning("Failed to load purchase counts: " + e.getMessage());
+      environment.logger().warning("Failed to load purchase counts: " + e.getMessage());
     }
     return counts;
   }
